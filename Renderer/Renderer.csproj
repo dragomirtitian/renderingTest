@@ -86,12 +86,6 @@
     <Compile Include="TestUtilities\FakePrincipal.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RenderingTest\RenderingTest.csproj">
-      <Project>{ffb2dbfa-46ee-41c3-b018-9148fca7e88d}</Project>
-      <Name>RenderingTest</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
