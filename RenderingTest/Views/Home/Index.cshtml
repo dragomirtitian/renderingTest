@@ -3,3 +3,6 @@
 }
 
 <h2>Index</h2>
+@Html.ActionLink("Index", "Home", new {  id = 0 })
+@Html.Partial("Partial", new RenderingTest.Controllers.ViewModel { Value = 0 });
+<h2>Index</h2>

@@ -5,40 +5,31 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Web;
+using System.IO;
+using System.Web.Routing;
+using System.Threading.Tasks;
+using System.Web.Caching;
 
 namespace IRR2.WebUI.UnitTests.TestUtilities
 {
-    public class FakeHttpResponse : HttpResponseBase
-    {
-        private HttpCookieCollection cookies;
-        public FakeHttpResponse( HttpCookieCollection cookies)
-        {
-            this.cookies = cookies;
-        }
-        public override HttpCookieCollection Cookies
-        {
-            get
-            {
-                return cookies;
-            }
-        }
-    }
-
+   
     public class FakeHttpRequest : HttpRequestBase
     {
-        private readonly NameValueCollection _formParams;
-        private readonly NameValueCollection _queryStringParams;
-        private readonly HttpCookieCollection _cookies;
+        private NameValueCollection _formParams;
+        private NameValueCollection _queryStringParams;
+        private HttpCookieCollection _cookies;
         private RequestData _data;
         private HttpBrowserCapabilitiesData _dataCaps;
 
-        public FakeHttpRequest(NameValueCollection formParams, NameValueCollection queryStringParams, HttpCookieCollection cookies, RequestData data, HttpBrowserCapabilitiesData dataCaps)
+        public FakeHttpRequest(HttpRequest httpRequest, NameValueCollection formParams, NameValueCollection queryStringParams, HttpCookieCollection cookies, RequestData data, HttpBrowserCapabilitiesData dataCaps)
         {
+            _httpRequest = httpRequest;
             _formParams = formParams;
             _queryStringParams = queryStringParams;
             _cookies = cookies;
             _data = data;
             _dataCaps = dataCaps;
+            _serverVariables = new NameValueCollection();
         }
 
         public override NameValueCollection Form
@@ -56,6 +47,13 @@ namespace IRR2.WebUI.UnitTests.TestUtilities
                 return _queryStringParams;
             }
         }
+        public override NameValueCollection ServerVariables
+        {
+            get
+            {
+                return _serverVariables;
+            }
+        }
 
         public override HttpCookieCollection Cookies
         {
@@ -65,10 +63,80 @@ namespace IRR2.WebUI.UnitTests.TestUtilities
             }
         }
 
+        public override void Abort()
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override byte[] BinaryRead(int count)
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override Stream GetBufferedInputStream()
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override Stream GetBufferlessInputStream()
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override Stream GetBufferlessInputStream(bool disableMaxRequestLength)
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override void InsertEntityBody()
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override void InsertEntityBody(byte[] buffer, int offset, int count)
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override int[] MapImageCoordinates(string imageFieldName)
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override string MapPath(string overridePath)
+        {
+            return this._httpRequest.MapPath(overridePath);
+        }
+
+        public override string MapPath(string overridePath, string baseoverrideDir, bool allowCrossAppMapping)
+        {
+            return this._httpRequest.MapPath(overridePath, baseoverrideDir, allowCrossAppMapping);
+        }
+
+        public override double[] MapRawImageCoordinates(string imageFieldName)
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override void SaveAs(string filename, bool includeHeaders)
+        {
+            System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
+        }
+
+        public override void ValidateInput()
+        {
+        }
+
+
         public override string[] AcceptTypes { get { return _data.AcceptTypes; } }
         public override string AnonymousID { get { return _data.AnonymousID; } }
         public override string ApplicationPath { get { return _data.ApplicationPath; } }
-        public override string AppRelativeCurrentExecutionFilePath { get { return _data.AppRelativeCurrentExecutionFilePath; } }
+
+        string _AppRelativeCurrentExecutionFilePath;
+        private HttpRequest _httpRequest;
+        private NameValueCollection _serverVariables;
+
+        public override string AppRelativeCurrentExecutionFilePath { get { return _AppRelativeCurrentExecutionFilePath ?? _data.AppRelativeCurrentExecutionFilePath; } }
         public override int ContentLength { get { return _data.ContentLength; } }
         public override string ContentType { get { return _data.ContentType; } }
         public override string CurrentExecutionFilePath { get { return _data.CurrentExecutionFilePath; } }
@@ -97,6 +165,26 @@ namespace IRR2.WebUI.UnitTests.TestUtilities
             {
                 return new FakeHttpBrowserCapabilities(_dataCaps);
             }
+        }
+
+        internal string SwitchCurrentExecutionFilePath(string filePath)
+        {
+            var old = this.AppRelativeCurrentExecutionFilePath;
+            this._AppRelativeCurrentExecutionFilePath = filePath;
+            return old;
+        }
+
+        internal NameValueCollection SwitchForm(NameValueCollection nameValueCollection)
+        {
+            var old = this.Form;
+            this._formParams = nameValueCollection;
+            return old;
+        }
+
+        internal string QueryStringText
+        {
+            get { System.Diagnostics.Debugger.Break(); throw new NotImplementedException(); }
+            set { System.Diagnostics.Debugger.Break(); throw new NotImplementedException(); }
         }
     }
 

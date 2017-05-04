@@ -14,49 +14,50 @@ namespace IRR2.WebUI.UnitTests.TestUtilities
 {
     public class FakeControllerContext : ControllerContext
     {
-        public FakeControllerContext(ControllerBase controller)
-            : this(controller, null, null, null, null, null, null)
+        public FakeControllerContext(HttpContext context, ControllerBase controller)
+            : this(context, controller, null, null, null, null, null, null)
         {
         }
 
-        public FakeControllerContext(ControllerBase controller, HttpCookieCollection cookies)
-            : this(controller, null, null, null, null, cookies, null)
+        public FakeControllerContext(HttpContext context, ControllerBase controller, HttpCookieCollection cookies)
+            : this(context, controller, null, null, null, null, cookies, null)
         {
         }
 
-        public FakeControllerContext(ControllerBase controller, SessionStateItemCollection sessionItems)
-            : this(controller, null, null, null, null, null, sessionItems)
-        {
-        }
-
-
-        public FakeControllerContext(ControllerBase controller, NameValueCollection formParams)
-            : this(controller, null, null, formParams, null, null, null)
+        public FakeControllerContext(HttpContext context, ControllerBase controller, SessionStateItemCollection sessionItems)
+            : this(context, controller, null, null, null, null, null, sessionItems)
         {
         }
 
 
-        public FakeControllerContext(ControllerBase controller, NameValueCollection formParams, NameValueCollection queryStringParams)
-            : this(controller, null, null, formParams, queryStringParams, null, null)
+        public FakeControllerContext(HttpContext context, ControllerBase controller, NameValueCollection formParams)
+            : this(context, controller, null, null, formParams, null, null, null)
+        {
+        }
+
+
+        public FakeControllerContext(HttpContext context, ControllerBase controller, NameValueCollection formParams, NameValueCollection queryStringParams)
+            : this(context, controller, null, null, formParams, queryStringParams, null, null)
         {
         }
 
 
 
-        public FakeControllerContext(ControllerBase controller, string userName)
-            : this(controller, userName, null, null, null, null, null)
+        public FakeControllerContext(HttpContext context, ControllerBase controller, string userName)
+            : this(context, controller, userName, null, null, null, null, null)
         {
         }
 
 
-        public FakeControllerContext(ControllerBase controller, string userName, string[] roles)
-            : this(controller, userName, roles, null, null, null, null)
+        public FakeControllerContext(HttpContext context, ControllerBase controller, string userName, string[] roles)
+            : this(context, controller, userName, roles, null, null, null, null)
         {
         }
 
 
         public FakeControllerContext
             (
+            HttpContext context,
                 ControllerBase controller,
                 string userName,
                 string[] roles,
@@ -65,7 +66,7 @@ namespace IRR2.WebUI.UnitTests.TestUtilities
                 HttpCookieCollection cookies,
                 SessionStateItemCollection sessionItems, RequestData data = null
             )
-            : base(new FakeHttpContext(new FakePrincipal(new FakeIdentity(userName), roles), formParams, queryStringParams, cookies, sessionItems, data, null), new RouteData(), controller)
+            : base(new FakeHttpContext(context, new FakePrincipal(new FakeIdentity(userName), roles), formParams, queryStringParams, cookies, sessionItems, data, null), new RouteData(), controller)
         { }
     }
 }

@@ -1,8 +1,13 @@
-﻿using IRR2.WebUI.UnitTests.TestUtilities;
+﻿using IRR2.Common.Tests;
+using IRR2.Common.Tests.MvcRendering;
+using IRR2.WebUI.UnitTests.TestUtilities;
+using Renderer.TestUtilities;
 using RenderingTest.Controllers;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -12,6 +17,8 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Web;
+using System.Web.Caching;
+using System.Web.Compilation;
 using System.Web.Hosting;
 using System.Web.Mvc;
 using System.Web.Routing;
@@ -20,85 +27,51 @@ using System.Xml.Serialization;
 
 namespace Renderer
 {
-    class CustomVirtualPathProvider: VirtualPathProvider
-    {
-
-    }
     class Program
-    {
+    {   
         static void Main(string[] args)
         {
-
-            Thread.GetDomain().SetData(".appDomain", "*");
-            Thread.GetDomain().SetData(".appId", "12");
-            Thread.GetDomain().SetData(".appPath", @"c:\users\titian.dragomir\documents\visual studio 2013\Projects\RenderingTest\RenderingTest\");
-            Thread.GetDomain().SetData(".appVPath", "/");
-            Thread.GetDomain().SetData(".domainId", "LM/W3SVC/12/ROOT-1-131381888751591619");
-
-            typeof(System.Configuration.ConfigurationManager).GetField("s_initState", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, 0);
-            var env = new HostingEnvironment();
-            typeof(HostingEnvironment)
-                .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-                .First(_ => _.Name == "Initialize" && _.GetParameters().Length == 5)
-                .Invoke(env, new object[]
-                {
-                    null,
-                    new ApplicationHost(),
-                    new ConfigMapPathFactory(),
-                    null,
-                    //Activator.CreateInstance(typeof(System.Web.Hosting.HostingEnvironment).Assembly.GetType("System.Web.Hosting.HostingEnvironmentParameters")),
-                    null,
-                });
+            RenderingEnviroment.Initialize(@"C:\Users\drago\Desktop\renderingTest\RenderingTest");
             
-            CallContext.SetData("__TemporaryVirtualPathProvider__", new CustomVirtualPathProvider());
+            HttpContext.Current = new HttpContext(new FakeHttpWorkerRequest());
+            var globaltype = BuildManager.GetGlobalAsaxType();
+            var global = (HttpApplication)Activator.CreateInstance(globaltype);
+            globaltype.GetMethod("Application_Start", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(global, new object[0]);
 
+            var c = CreateController<HomeController>(global, HttpContext.Current);
+            
+            var index = c.Index();
+            index.ExecuteResult(c.ControllerContext);
 
-
-            var c = CreateController<HomeController>();
-            //var v = c.Index();
-            RenderViewToString(c.ControllerContext, @"~\Views\Home\Index.cshtml");
-        }
-        static string RenderViewToString(ControllerContext context,
-                                    string viewPath,
-                                    object model = null,
-                                    bool partial = false)
-        {
-            // first find the ViewEngine for this view
-            ViewEngineResult viewEngineResult = null;
-            if (partial)
-                viewEngineResult = ViewEngines.Engines.FindPartialView(context, viewPath);
-            else
-                viewEngineResult = ViewEngines.Engines.FindView(context, viewPath, null);
-
-            if (viewEngineResult == null)
-                throw new FileNotFoundException("View cannot be found.");
-
-            // get the view and attach the model to view data
-            var view = viewEngineResult.View;
-            context.Controller.ViewData.Model = model;
-
-            string result = null;
-
-            using (var sw = new StringWriter())
-            {
-                var ctx = new ViewContext(context, view,
-                                            context.Controller.ViewData,
-                                            context.Controller.TempData,
-                                            sw);
-                view.Render(ctx, sw);
-                result = sw.ToString();
-            }
-
-            return result;
+            ((FakeHttpResponse)c.ControllerContext.HttpContext.Response).CopyOutputTo(@"result.html");
+            //RenderViewToString(c.ControllerContext, @"Index");
         }
 
-        public static T CreateController<T>(RouteData routeData = null) where T : Controller, new()
+        //static string RenderViewToString(ControllerContext context,
+        //                            ViewResult result)
+        //{
+        //    ViewEngineResult result = null;
+        //    if (this.View == null)
+        //    {
+        //        result = result.FindView(context);
+        //        this.View = result.View;
+        //    }
+        //    TextWriter output = context.HttpContext.Response.Output;
+        //    ViewContext viewContext = new ViewContext(context, this.View, this.ViewData, this.TempData, output);
+        //    this.View.Render(viewContext, output);
+        //    if (result != null)
+        //    {
+        //        result.ViewEngine.ReleaseView(context, this.View);
+        //    }
+        //}
+
+        public static T CreateController<T>(HttpApplication app, HttpContext context, RouteData routeData = null) where T : Controller, new()
         {
             // create a disconnected controller instance
             T controller = new T();
 
             // get context wrapper from HttpContext if available
-            HttpContextBase wrapper = new FakeHttpContext(new FakePrincipal(new FakeIdentity("uu"), new string[0]),
+            HttpContextBase wrapper = new FakeHttpContext(app, context, new FakePrincipal(new FakeIdentity("uu"), new string[0]),
                 new NameValueCollection(), new NameValueCollection(), new HttpCookieCollection(), new SessionStateItemCollection(), Load<RequestData>(requestData), Load<HttpBrowserCapabilitiesData>(browsercaps));
 
             if (routeData == null)
@@ -111,6 +84,7 @@ namespace Renderer
                                      controller.GetType()
                                                .Name.ToLower().Replace("controller", ""));
 
+            routeData.Values.Add("action", "Index");
             controller.ControllerContext = new ControllerContext(wrapper, routeData, controller);
             return controller;
         }
