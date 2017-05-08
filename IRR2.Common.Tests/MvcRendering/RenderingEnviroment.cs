@@ -24,8 +24,10 @@ namespace IRR2.Common.Tests.MvcRendering
         public string AppId { get; private set; }
         public string AppDomain { get; private set; }
         public string Path { get; private set; }
+        public RenderingConfigMapPathFactory ConfigMapPathFactory { get; private set; }
+        public RenderingApplicationHost ApplicationHost { get; private set; }
 
-        public static void Initialize(string path, string appId = "1", string domainId = "LM/W3SVC/1/ROOT-1-131381888751591619", string appVPath = "/", string appDomain  = "*")
+        public static RenderingEnviroment Initialize(string path, string appId = "1", string domainId = "LM/W3SVC/1/ROOT-1-131381888751591619", string appVPath = "/", string appDomain  = "*")
         {
             lock (sync)
             {
@@ -44,6 +46,7 @@ namespace IRR2.Common.Tests.MvcRendering
                 };
                 Instance.BuildEnviroment();
             }
+            return Instance;
         }
 
         private void BuildEnviroment()
@@ -83,8 +86,8 @@ namespace IRR2.Common.Tests.MvcRendering
                 .Invoke(env, new object[]
                 {
                     null,
-                    new RenderingApplicationHost(this),
-                    new RenderingConfigMapPathFactory(this),
+                    this.ApplicationHost = new RenderingApplicationHost(this),
+                    this.ConfigMapPathFactory = new RenderingConfigMapPathFactory(this),
                     null,
                     null,
                 });

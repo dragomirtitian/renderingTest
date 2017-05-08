@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IRR2.Common.Tests.Context;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,13 +11,19 @@ namespace RenderingTest.Controllers
 {
     public class HomeController : Controller
     {
+        
+        public HomeController()
+        {
+        }
         //
         // GET: /Home/
 
-        public ActionResult Index()
+        public ActionResult Index(ViewModel vm)
         {
+            var x = Serializer.Serialize(System.Web.HttpContext.Current);
+            //System.IO.File.WriteAllText(@"C:\Users\drago\Desktop\renderingTest\context.json", x);
             //new XmlSerializer(typeof(RequestData)).Serialize(new StringWriter(), new RequestData());
-            return View();
+            return View(vm ?? new ViewModel());
         }
 
         public PartialViewResult Partial(int value = 0)
@@ -33,6 +40,7 @@ namespace RenderingTest.Controllers
     public class ViewModel
     {
         public int Value { get; set; }
+        public string StrValue { get; set; }
     }
 
     public class RequestData

@@ -1,8 +1,10 @@
 ﻿using IRR2.Common.Tests;
+using IRR2.Common.Tests.Context;
 using IRR2.Common.Tests.MvcRendering;
 using IRR2.WebUI.UnitTests.TestUtilities;
+using Newtonsoft.Json;
 using Renderer.TestUtilities;
-using RenderingTest.Controllers;
+//using RenderingTest.Controllers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,6 +25,7 @@ using System.Web.Hosting;
 using System.Web.Mvc;
 using System.Web.Routing;
 using System.Web.SessionState;
+using System.Web.WebPages.Scope;
 using System.Xml.Serialization;
 
 namespace Renderer
@@ -31,19 +34,43 @@ namespace Renderer
     {   
         static void Main(string[] args)
         {
-            RenderingEnviroment.Initialize(@"C:\Users\drago\Desktop\renderingTest\RenderingTest");
-            
-            HttpContext.Current = new HttpContext(new FakeHttpWorkerRequest());
+            var root = @"C:\tmp\irr2\IRR2.WebUI\";
+            //var root = @"C:\Users\drago\Desktop\renderingTest\RenderingTest";
+            AppDomain.CurrentDomain.AssemblyResolve += (s, e) =>
+            {
+                string assembliesDir = root + @"bin";
+                var asmPath = Path.Combine(assembliesDir, e.Name + ".dll");
+                if (!File.Exists(asmPath)) return null;
+                Assembly asm = Assembly.LoadFrom(asmPath);
+                return asm;
+            };
+
+            var env = RenderingEnviroment.Initialize(root);
+
+            var data = JsonConvert.DeserializeObject(File.ReadAllText(@"C:\Users\drago\Desktop\renderingTest\context.json"));
+
+            var worker = new FakeHttpWorkerRequest(data, env.ApplicationHost);
+            HttpContext.Current = new HttpContext(worker);
             var globaltype = BuildManager.GetGlobalAsaxType();
             var global = (HttpApplication)Activator.CreateInstance(globaltype);
             globaltype.GetMethod("Application_Start", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(global, new object[0]);
+            ScopeStorage.CurrentProvider = new RenderingScopeStorageProvider();
+            GlobalFilters.Filters.Add(new HttpCaptureFilter());
 
-            var c = CreateController<HomeController>(global, HttpContext.Current);
-            
-            var index = c.Index();
-            index.ExecuteResult(c.ControllerContext);
+            worker = new FakeHttpWorkerRequest(data, env.ApplicationHost);
+            HttpContext.Current = new HttpContext(worker);
 
-            ((FakeHttpResponse)c.ControllerContext.HttpContext.Response).CopyOutputTo(@"result.html");
+            //var c = CreateController<RenderingTest.Controllers.HomeController>(global, HttpContext.Current);
+            var c = CreateController<IRR2.WebUI.Controllers.DashBoard.HomeController>(global, HttpContext.Current);
+
+            //var index = c.Index(new ViewModel { StrValue = "D", Value = 1 });
+
+            HttpContext.Current.Response.Flush();
+
+            worker.CopyTo("result.html");
+            //index.ExecuteResult(c.ControllerContext);
+
+            //((FakeHttpResponse)c.ControllerContext.HttpContext.Response).CopyOutputTo(@"result.html");
             //RenderViewToString(c.ControllerContext, @"Index");
         }
 
@@ -65,27 +92,17 @@ namespace Renderer
         //    }
         //}
 
-        public static T CreateController<T>(HttpApplication app, HttpContext context, RouteData routeData = null) where T : Controller, new()
+        public static T CreateController<T>(HttpApplication app, HttpContext context) where T : Controller
         {
+            var contextWrapper = new HttpContextWrapper(context);
+            RouteData routeData = RouteTable.Routes.GetRouteData(contextWrapper);
+            RequestContext requestContext = new RequestContext(contextWrapper, routeData);
             // create a disconnected controller instance
-            T controller = new T();
+            T controller = (T)System.Web.Mvc.ControllerBuilder.Current.GetControllerFactory().CreateController(requestContext, "Home");
 
-            // get context wrapper from HttpContext if available
-            HttpContextBase wrapper = new FakeHttpContext(app, context, new FakePrincipal(new FakeIdentity("uu"), new string[0]),
-                new NameValueCollection(), new NameValueCollection(), new HttpCookieCollection(), new SessionStateItemCollection(), Load<RequestData>(requestData), Load<HttpBrowserCapabilitiesData>(browsercaps));
 
-            if (routeData == null)
-                routeData = new RouteData();
-
-            // add the controller routing if not existing
-            if (!routeData.Values.ContainsKey("controller") &&
-                !routeData.Values.ContainsKey("Controller"))
-                routeData.Values.Add("controller",
-                                     controller.GetType()
-                                               .Name.ToLower().Replace("controller", ""));
-
-            routeData.Values.Add("action", "Index");
-            controller.ControllerContext = new ControllerContext(wrapper, routeData, controller);
+            ((IController)controller).Execute(requestContext);
+            //controller.ControllerContext = new ControllerContext(contextWrapper, routeData, controller);
             return controller;
         }
         public static T Load<T>(string data)

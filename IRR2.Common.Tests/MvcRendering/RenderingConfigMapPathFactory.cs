@@ -8,7 +8,7 @@ using System.Web.Configuration;
 
 namespace IRR2.Common.Tests.MvcRendering
 {
-    class RenderingConfigMapPathFactory : IConfigMapPathFactory
+    public class RenderingConfigMapPathFactory : IConfigMapPathFactory
     {
         private readonly RenderingEnviroment Enviroment;
 
@@ -18,12 +18,19 @@ namespace IRR2.Common.Tests.MvcRendering
         }
         public IConfigMapPath Create(string virtualPath, string physicalPath)
         {
-            return new ConfigMapPath();
+            return new ConfigMapPath(this.Enviroment);
         }
 
 
         class ConfigMapPath : IConfigMapPath
         {
+            private RenderingEnviroment enviroment;
+
+            public ConfigMapPath(RenderingEnviroment enviroment)
+            {
+                this.enviroment = enviroment;
+            }
+
             public string GetAppPathForPath(string siteID, string path)
             {
                 System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
@@ -34,10 +41,7 @@ namespace IRR2.Common.Tests.MvcRendering
                 System.Diagnostics.Debugger.Break(); throw new NotImplementedException();
             }
 
-            public string GetMachineConfigFilename()
-            {
-                return @"c:\Windows\Microsoft.NET\Framework64\v4.0.30319\Config\machine.config";
-            }
+            public string GetMachineConfigFilename() => RenderingConfigurationSystem.MachineConfigPath;
 
             public void GetPathConfigFilename(string siteID, string path, out string directory, out string baseName)
             {
@@ -52,14 +56,11 @@ namespace IRR2.Common.Tests.MvcRendering
                 }
             }
 
-            public string GetRootWebConfigFilename()
-            {
-                return @"c:\Windows\Microsoft.NET\Framework64\v4.0.30319\Config\Web.config";
-            }
+            public string GetRootWebConfigFilename() => RenderingConfigurationSystem.RootWebConfigPath;
 
             public string MapPath(string siteID, string path)
             {
-                return Path.Combine(@"C:\Users\drago\Desktop\renderingTest\RenderingTest", path.Substring(1).Replace('/', '\\'));
+                return Path.Combine(enviroment.Path, path.Substring(1).Replace('/', '\\'));
             }
 
             public void ResolveSiteArgument(string siteArgument, out string siteName, out string siteID)

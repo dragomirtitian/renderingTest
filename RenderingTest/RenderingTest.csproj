@@ -209,6 +209,12 @@
     <Folder Include="App_Data\" />
     <Folder Include="Models\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\IRR2.Common.Tests\IRR2.Common.Tests.Rendering.csproj">
+      <Project>{b01ad062-8ba8-4604-8201-06dd33146382}</Project>
+      <Name>IRR2.Common.Tests.Rendering</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

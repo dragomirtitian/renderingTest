@@ -8,7 +8,7 @@ using System.Web.Hosting;
 
 namespace IRR2.Common.Tests.MvcRendering
 {
-    class RenderingApplicationHost : IApplicationHost
+    public class RenderingApplicationHost : IApplicationHost
     {
         public RenderingApplicationHost(RenderingEnviroment env)
         {

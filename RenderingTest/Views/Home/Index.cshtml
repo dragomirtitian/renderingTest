@@ -1,8 +1,15 @@
-﻿@{
+﻿@model RenderingTest.Controllers.ViewModel
+@{
     ViewBag.Title = "Index";
 }
 
 <h2>Index</h2>
-@Html.ActionLink("Index", "Home", new {  id = 0 })
-@Html.Partial("Partial", new RenderingTest.Controllers.ViewModel { Value = 0 });
+@using (@Html.BeginForm())
+{
+    @Html.ActionLink("Index", "Home", new { id = 0 })
+    @Html.Partial("Partial", new RenderingTest.Controllers.ViewModel { Value = 0 });
+    @Html.TextBoxFor(_ => _.StrValue);
+    @Html.TextBoxFor(_ => _.Value);
+    <button type="submit">Submit</button>
+}
 <h2>Index</h2>
